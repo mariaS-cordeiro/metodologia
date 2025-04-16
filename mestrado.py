@@ -79,8 +79,8 @@ elif aba == "Base com Vídeos":
         st.success("Anotação registrada com sucesso!")
 
 # ----------- ABA SIMULAÇÕES QUANTITATIVAS ----------- #
-st.download_button("📥 Baixar base simulada de exemplo", data=open("base_simulada_quantitativa.csv", "rb").read(), file_name="base_exemplo.csv")
 elif aba == "Simulações Quantitativas":
+    st.download_button("📥 Baixar base simulada de exemplo", data=open("base_simulada_quantitativa.csv", "rb").read(), file_name="base_exemplo.csv")
     st.header("🧪 Simulações de Pesquisa Quantitativa com Dados Digitais")
 
     questao = st.selectbox("Escolha uma questão de pesquisa para explorar:", [
