@@ -1,7 +1,5 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
-from wordcloud import WordCloud
 from datetime import datetime
 
 st.set_page_config(page_title="Ambiente de Metodologia de Pesquisa", layout="wide")
@@ -64,9 +62,10 @@ elif aba == "Base de Dados Textuais":
         coluna_texto = st.selectbox("Escolha a coluna com os textos:", df_text.columns)
         texto_completo = " ".join(df_text[coluna_texto].astype(str))
 
-        st.subheader("Nuvem de Palavras")
-        wc = WordCloud(width=800, height=300).generate(texto_completo)
-        st.image(wc.to_array())
+        st.subheader("Exibição de Palavras Frequentes")
+        palavras = texto_completo.split()
+        frequencia = pd.Series(palavras).value_counts().head(20)
+        st.bar_chart(frequencia)
 
 # ----------- ABA VÍDEO ----------- #
 elif aba == "Base com Vídeos":
