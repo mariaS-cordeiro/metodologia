@@ -1,56 +1,61 @@
-"Abordagem Quantitativa",
-"Estudo de Caso",
-"Base de Dados Textuais",
-    "Base com Vídeos"
-    "Base com Vídeos",
-    "Simulações Quantitativas"
-])
+import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+from wordcloud import WordCloud
 
-# ----------- ABA QUALITATIVA ----------- #
-@@ -75,3 +76,46 @@
-st.text_area("Anotação sobre este trecho do vídeo")
-if st.button("Salvar anotação do vídeo"):
-st.success("Anotação registrada com sucesso!")
+st.set_page_config(page_title="Laboratório de Metodologia", layout="wide")
 
-# ----------- ABA SIMULAÇÕES QUANTITATIVAS ----------- #
-elif aba == "Simulações Quantitativas":
-    st.header("🧪 Simulações de Pesquisa Quantitativa com Dados Digitais")
+st.title("🧪 Laboratório de Abordagens - Pesquisa em Comunicação Digital")
+st.write("Escolha uma abordagem, carregue sua base e veja o que ela pode te responder!")
 
-    questao = st.selectbox("Escolha uma questão de pesquisa para explorar:", [
-        "Qual é o volume de publicações sobre determinado tema ao longo do tempo?",
-        "Qual tipo de postagem gera maior número médio de curtidas?",
-        "Há correlação entre número de hashtags e número de comentários?",
-        "Como varia o número de comentários entre diferentes autores/perfis?",
-        "Existe diferença estatística entre engajamento de dois temas?"
-    ])
+# Upload do arquivo CSV
+arquivo = st.file_uploader("Carregue sua base de dados (.csv):", type="csv")
 
-    st.markdown("Faça o upload da base de dados que contenha colunas como 'data', 'tema', 'hashtags', 'comentarios', 'curtidas', 'tipo_postagem', etc.")
-    arquivo_simulacao = st.file_uploader("Envie a base (.csv)", type="csv")
-    if arquivo_simulacao:
-        df_sim = pd.read_csv(arquivo_simulacao)
-        st.write("Pré-visualização dos dados:", df_sim.head())
+# Seleção da abordagem
+abordagem = st.radio("Selecione a abordagem de análise:", ["Quantitativa", "Qualitativa", "Mista"])
 
-        if questao == "Qual é o volume de publicações sobre determinado tema ao longo do tempo?":
-            if 'data' in df_sim.columns:
-                df_sim['data'] = pd.to_datetime(df_sim['data'])
-                contagem = df_sim.groupby(df_sim['data'].dt.date).size()
-                st.line_chart(contagem)
+# Caso o usuário carregue uma base
+if arquivo:
+    df = pd.read_csv(arquivo)
+    st.subheader("Pré-visualização da base de dados")
+    st.dataframe(df.head())
 
-        elif questao == "Qual tipo de postagem gera maior número médio de curtidas?":
-            if 'tipo_postagem' in df_sim.columns and 'curtidas' in df_sim.columns:
-                medias = df_sim.groupby('tipo_postagem')['curtidas'].mean()
-                st.bar_chart(medias)
+    texto_colunas = df.select_dtypes(include=['object']).columns.tolist()
 
-        elif questao == "Há correlação entre número de hashtags e número de comentários?":
-            if 'hashtags' in df_sim.columns and 'comentarios' in df_sim.columns:
-                df_sim['n_hashtags'] = df_sim['hashtags'].astype(str).apply(lambda x: len(x.split(',')))
-                correlacao = df_sim[['n_hashtags', 'comentarios']].corr()
-                st.write("Correlação:", correlacao)
+    if abordagem == "Quantitativa":
+        st.subheader("🔢 Análise Quantitativa")
+        coluna_freq = st.selectbox("Escolha a coluna para analisar frequência de termos: ", texto_colunas)
 
-        elif questao == "Como varia o número de comentários entre diferentes autores/perfis?":
-            if 'autor' in df_sim.columns and 'comentarios' in df_sim.columns:
-                soma_coment = df_sim.groupby('autor')['comentarios'].sum()
-                st.bar_chart(soma_coment)
+        freq = df[coluna_freq].value_counts().head(10)
+        fig, ax = plt.subplots()
+        freq.plot(kind='bar', ax=ax)
+        ax.set_title("Top 10 valores mais frequentes")
+        st.pyplot(fig)
 
-        elif questao == "Existe diferença estatística entre engajamento de dois temas?":
-            st.write("⚠️ Essa análise requer tratamento estatístico adicional (teste t, ANOVA, etc.). Podemos implementá-la em uma versão futura.")
+    elif abordagem == "Qualitativa":
+        st.subheader("🗣️ Análise Qualitativa - Nuvem de Palavras")
+        coluna_texto = st.selectbox("Escolha a coluna de texto para gerar a nuvem:", texto_colunas)
+
+        texto = " ".join(df[coluna_texto].dropna().astype(str))
+        nuvem = WordCloud(width=800, height=400, background_color='white').generate(texto)
+        fig, ax = plt.subplots()
+        ax.imshow(nuvem, interpolation='bilinear')
+        ax.axis("off")
+        st.pyplot(fig)
+
+    elif abordagem == "Mista":
+        st.subheader("🔀 Abordagem Mista: Frequência + Palavra-chave")
+        coluna = st.selectbox("Escolha a coluna de texto:", texto_colunas)
+        df['palavra_chave'] = df[coluna].str.extract(r'(\b\w{5,}\b)', expand=False)
+        st.write("Visualização das palavras-chave (palavras com mais de 5 letras):")
+        st.dataframe(df[['palavra_chave']].value_counts().head(10))
+
+        texto = " ".join(df[coluna].dropna().astype(str))
+        nuvem = WordCloud(width=800, height=400, background_color='white').generate(texto)
+        fig, ax = plt.subplots()
+        ax.imshow(nuvem, interpolation='bilinear')
+        ax.axis("off")
+        st.pyplot(fig)
+
+else:
+    st.info("⚠️ Carregue um arquivo .csv para começar a análise.")
